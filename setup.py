@@ -8,17 +8,7 @@ with open('README.md') as f:
 
 
 setup(
-    name='titulky',
-    version=__version__,
     author='Alexander Theler',
-    description='Tiny SubRip subtitles editor',
-    long_description=longDescription,
-    long_description_content_type='text/markdown',
-    #url=TODO: Link to PyPi,
-    project_urls={
-        'GitHub': 'https://github.com/atheler/titulky',
-        'Bug Tracker': 'https://github.com/atheler/titulky/issues',
-    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Console',
@@ -37,11 +27,21 @@ setup(
         'Topic :: Text Processing',
         'Topic :: Utilities',
     ],
-    py_modules=['titulky'],
-    python_requires='>=3.6',
+    description='Tiny SubRip subtitles editor',
     entry_points = {
         'console_scripts': [
             'titulky = titulky:main',
         ],
     },
+    long_description=longDescription,
+    long_description_content_type='text/markdown',
+    name='titulky',
+    project_urls={
+        'GitHub': 'https://github.com/atheler/titulky',
+        'Bug Tracker': 'https://github.com/atheler/titulky/issues',
+    },
+    py_modules=['titulky'],
+    python_requires='>=3.6',
+    url='http://pypi.org/project/titulky/',
+    version=__version__,
 )
