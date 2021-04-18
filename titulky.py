@@ -16,6 +16,7 @@ from argparse import Namespace
 
 DIGITS = set(b'0123456789')
 ARROW = b' --> '
+__version__ = '1.0.0'
 
 
 def parse_timestamp(text: str) -> float:
