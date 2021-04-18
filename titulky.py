@@ -6,6 +6,7 @@ fit subtitles.
 
 Note: We internally process binary data to work around the various text encodings / BOMs.
 """
+import math
 import argparse
 import datetime
 import os
@@ -16,7 +17,7 @@ from argparse import Namespace
 
 DIGITS = set(b'0123456789')
 ARROW = b' --> '
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 
 def parse_timestamp(text: str) -> float:
@@ -40,10 +41,11 @@ def parse_timestamp(text: str) -> float:
 
     timestamp = 0.
     parts = text.split(':')
+    sign = math.copysign(1, float(parts[0]))
     for i, part in enumerate(reversed(parts)):
-        timestamp += float(part) * (60 ** i)
+        timestamp += abs(float(part)) * (60 ** i)
 
-    return timestamp
+    return sign * timestamp
 
 
 def parse_timestamp_srt(text: bytes) -> float:
@@ -194,6 +196,7 @@ def cli() -> Namespace:
     """Parse command line interface."""
     parser = argparse.ArgumentParser(prog='Titulky', description='SubRip editor')
     parser.add_argument('infile', help='input file')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
     parser.set_defaults(mode='info')
 
     subparsers = parser.add_subparsers()
@@ -280,12 +283,14 @@ def main():
     data = raw.lstrip(bom)
     lines = data.split(newline)
     subtitles = list(parse_subtitles(lines))
+    if not subtitles:
+        print(f'No subtitles in {args.infile!r}')
+        sys.exit(1)
+
     first = min(sub.start for sub in subtitles)
     last = max(sub.start for sub in subtitles)
-
     if args.mode == 'info':
         print(f'Found {len(subtitles)} subtitles in {args.infile!r}')
-        print(f'First subtitle at {format_timestamp_srt(first)} and last at {format_timestamp_srt(last)}')
         print(f'{len(raw)} bytes')
         if bom:
             print(f'BOM: {bom}')
@@ -293,18 +298,18 @@ def main():
             print(f'BOM: {bom} (no BOM)')
 
         print(f'newline: {newline}')
+        print('Subtitles:\n')
+        print(format_subtitles(subtitles[:3]).decode())
+        print('...\n')
+        print(format_subtitles(subtitles[-3:]).decode())
         sys.exit(0)
-
-    if not subtitles:
-        print(f'No subtitles in {args.infile!r}')
-        sys.exit(1)
 
     if args.mode == 'shift':
         amount = parse_timestamp(args.amount)
         if first + amount < 0:
             raise ValueError(f'amount {amount} would lead to negative start time')
 
-        print(f'Shifting subtitles by {parse_timestamp(amount)}')
+        print(f'Shifting subtitles by {amount} seconds')
         newSubtitles = tranform_subtitles(subtitles, scale=1., offset=amount)
 
     elif args.mode == 'fit':
@@ -337,4 +342,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
