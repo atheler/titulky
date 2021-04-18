@@ -2,6 +2,14 @@
 
 Tiny Python SubRip editor. Display infos, shift and re-fit timestamps. 
 
+## Installation
+
+Use the package manager pip to install titulky.
+
+```bash
+pip3 install titulky
+```
+
 ## Usage
 
 Display informations for some `.srt` file.
