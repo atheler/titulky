@@ -6,9 +6,9 @@ fit subtitles.
 
 Note: We internally process binary data to work around the various text encodings / BOMs.
 """
-import math
 import argparse
 import datetime
+import math
 import os
 import sys
 from typing import Generator, Iterable, List, NamedTuple, Tuple
@@ -17,30 +17,21 @@ from argparse import Namespace
 
 DIGITS = set(b'0123456789')
 ARROW = b' --> '
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 
 def parse_timestamp(text: str) -> float:
     """Parse normal timestamp.
 
-    Args:
-        text: Input string.
-
-    Returns:
-        Parsed timestamp.
-
-    Raises:
-        ValueError: On invalid input string.
-
     Example:
         >>> parse_timestamp('1:23:45.6789')
         5025.6789
     """
-    if text.count(':') > 2:
+    parts = text.split(':')
+    if len(parts) > 3:
         raise ValueError(f'Invalid time string {text!r}')
 
     timestamp = 0.
-    parts = text.split(':')
     sign = math.copysign(1, float(parts[0]))
     for i, part in enumerate(reversed(parts)):
         timestamp += abs(float(part)) * (60 ** i)
@@ -74,8 +65,8 @@ def format_timestamp_srt(timestamp: float) -> bytes:
     """
     hours, remainder = divmod(timestamp, 3600)
     minutes, seconds = divmod(remainder, 60)
-    ret = '{:02}:{:02}:{:02.5}'.format(int(hours), int(minutes), seconds)
-    return ret.replace('.', ',').encode()
+    ret = b'%02d:%02d:%06.3f' % (int(hours), int(minutes), seconds)
+    return ret.replace(b'.', b',')
 
 
 class Subtitle(NamedTuple):
@@ -90,6 +81,7 @@ class Subtitle(NamedTuple):
 
 def parse_subtitle(lines: List[bytes]) -> Subtitle:
     """Parse single subtitle from bytes lines.
+
     Args:
         lines: Bytes lines to parse.
 
@@ -97,7 +89,7 @@ def parse_subtitle(lines: List[bytes]) -> Subtitle:
         Parsed Subtitle instance.
 
     Example:
-        >>> lines = [b'42', b'01:23:45,500 --> 01:34:54,000', b'Hello,', b'world!', b'' ]
+        >>> lines = [b'42', b'01:23:45,500 --> 01:34:54,000', b'Hello,', b'world!', b'']
         ... parse_subtitle(lines)
         Subtitle(nr=42, start=5025.5, end=5694.0, content=[b'Hello,', b'world!', b''])
     """
@@ -164,11 +156,26 @@ def format_subtitles(subtitles: Iterable[Subtitle], newline: bytes = b'\n') -> b
 
     Kwargs:
         newline: Newline character to use.
+
+    Returns:
+        Formatted SubRip subtitles.
     """
     return newline.join(
         newline.join(format_subtitle(sub))
         for sub in subtitles
     )
+
+
+def ceil(x, ndigits: int = 0) -> float:
+    """Ceil up number at ndigits."""
+    shift = 10 ** ndigits
+    return math.ceil(x * shift) / shift
+
+
+def floor(x, ndigits: int = 0) -> float:
+    """Floor down number at ndigits."""
+    shift = 10 ** ndigits
+    return math.floor(x * shift) / shift
 
 
 def tranform_subtitles(
@@ -179,6 +186,9 @@ def tranform_subtitles(
     """Transform start and end times of subtitles. f(t) = scale * t + offset.
 
     Args:
+        subtitles: Subtitles to transform.
+
+    Kwargs:
         scale: Scale factor.
         offset: Offset factor.
 
@@ -187,8 +197,8 @@ def tranform_subtitles(
     """
     for sub in subtitles:
         yield sub._replace(
-            start=scale * sub.start + offset,
-            end=scale * sub.end + offset,
+            start=ceil(scale * sub.start + offset, ndigits=3),
+            end=floor(scale * sub.end + offset, ndigits=3),
         )
 
 

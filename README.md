@@ -21,13 +21,13 @@ python3 titulky.py test.srt
 Shift subtitles by some amount.
 
 ```bash
-python3 titulky.py test.srt shift 12.34
+python3 titulky.py test.srt shift "12.34"
 ```
 
 Refit subtitles to some interval.
 
 ```bash
-python3 titulky.py test.srt shift 1:23.456 2:34:56
+python3 titulky.py test.srt shift "1:23.456" "2:34:56"
 ```
 
 By default titulky writes to stdout. You can write the output to a file with
